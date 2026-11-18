@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KAEC Remaining Tasks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+/* Layout: navy title band with KPIs (like the Excel header row) → engineer strip → one schedule table per system → deadlines list */
+:root{
+  --bg:#eef1f5; --surface:#ffffff; --line:#d3dae2; --ink:#14202c; --muted:#5a6876;
+  --band:#1e3a5c; --band-ink:#ffffff; --band-muted:#a9bdd3; --accent:#2563a8; --accent-soft:#e1ecf8;
+  --ns:#c62828; --ns-bg:#fde2df; --ns-fill:#e53935;
+  --wip:#9a6a00; --wip-bg:#fff2c2; --wip-fill:#f2b705;
+  --ok:#17803d; --ok-bg:#d9f3e2; --ok-fill:#22a355;
+  --na:#e9edf2;
+  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e141a; --surface:#151e27; --line:#283543; --ink:#e4eaf0; --muted:#94a3b2;
+  --band:#132a44; --band-ink:#f2f6fa; --band-muted:#8ea6c0; --accent:#6aa9e6; --accent-soft:#1a3048;
+  --ns:#ff8f85; --ns-bg:#3e1d1a; --ns-fill:#e5534b; --wip:#f5c84c; --wip-bg:#3a2f0e; --wip-fill:#d9a400; --ok:#6fd69a; --ok-bg:#133526; --ok-fill:#2ea35a; --na:#1b2530; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141a; --surface:#151e27; --line:#283543; --ink:#e4eaf0; --muted:#94a3b2;
+  --band:#132a44; --band-ink:#f2f6fa; --band-muted:#8ea6c0; --accent:#6aa9e6; --accent-soft:#1a3048;
+  --ns:#ff8f85; --ns-bg:#3e1d1a; --ns-fill:#e5534b; --wip:#f5c84c; --wip-bg:#3a2f0e; --wip-fill:#d9a400; --ok:#6fd69a; --ok-bg:#133526; --ok-fill:#2ea35a; --na:#1b2530; color-scheme:dark}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;margin:0}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+.in{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band{background:var(--band);color:var(--band-ink)}
+.band .in{padding-block:18px 20px;display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-end;justify-content:space-between}
+.tb{display:grid;gap:4px;min-width:0}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--band-muted)}
+h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em}
+.sync{font-size:12px;color:var(--band-muted);display:flex;align-items:center;gap:6px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--band-muted)}
+.sync.live i{background:#4ade80}
+.kpis{display:grid;grid-template-columns:repeat(4,auto);gap:0;min-width:0}
+.kpi{padding:2px 18px;border-left:1px solid rgba(255,255,255,.18);display:grid;gap:2px}
+.kpi:first-child{border-left:0;padding-left:0}
+.kpi b{font-family:var(--f-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:11px;color:var(--band-muted);letter-spacing:.04em}
+.kpi.r b{color:#ff8a80}
+.progress{grid-column:1/-1;margin-top:10px;height:6px;background:rgba(255,255,255,.14);display:flex;border-radius:3px;overflow:hidden}
+.progress i{height:100%}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,auto);row-gap:10px}.kpi:nth-child(3){border-left:0;padding-left:0}}
+
+main.in{padding-block:18px 56px;display:grid;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:12px}
+.ph{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between}
+.ph h2{margin:0;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted)}
+.load{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:8px}
+.eng{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:9px 10px;display:grid;grid-template-columns:auto 1fr;gap:2px 9px;align-items:center;min-width:0;background:var(--surface)}
+.eng:hover{border-color:var(--accent)}
+.eng:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.av{grid-row:span 2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;letter-spacing:.02em}
+.av.sm{width:20px;height:20px;font-size:9px;grid-row:auto}
+.eng .n{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eng .c{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eng .c em{font-style:normal;color:var(--ns);font-weight:600}
+.eng.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.eng.brush{background:var(--accent);border-color:var(--accent)}
+.eng.brush .n,.eng.brush .c,.eng.brush .c em{color:#fff}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;padding:9px 12px;font-size:13px}
+.bar b{color:var(--accent)}
+.chip{font:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);padding:5px 12px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.tools input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;flex:0 1 240px;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:6px}
+
+.sys{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.sys h3{margin:0;padding:10px 14px;background:var(--band);color:var(--band-ink);font-size:13px;letter-spacing:.1em;text-transform:uppercase;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.sys h3 span{font-family:var(--f-mono);font-weight:400;letter-spacing:0;text-transform:none;font-size:12px;color:var(--band-muted)}
+.box{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:660px;table-layout:fixed}
+col.c1{width:22%}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg)}
+td{border-bottom:1px solid var(--line);padding:5px 6px}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even) td.el{background:color-mix(in srgb,var(--bg) 50%,transparent)}
+td.el{padding:8px 12px;font-weight:600;font-size:13.5px}
+.cell{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:3px 8px;width:100%;min-height:54px;padding:7px 10px 7px 12px;border-radius:5px;border-left:5px solid;align-content:center;position:relative}
+.cell:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cell:hover{box-shadow:0 0 0 1px var(--line) inset;filter:saturate(1.15)}
+.st-ns{background:var(--ns-bg);border-color:var(--ns-fill)} .st-wip{background:var(--wip-bg);border-color:var(--wip-fill)} .st-ok{background:var(--ok-bg);border-color:var(--ok-fill)}
+.cell.late{box-shadow:0 0 0 1.5px var(--ns-fill) inset}
+.cell .d{font-family:var(--f-mono);font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.cell .k{font-size:11.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cell .who{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .who.none{color:var(--muted);font-weight:400}
+.tag{font-size:11px;font-weight:700;text-align:right;white-space:nowrap;padding:1px 7px;border-radius:999px;justify-self:end;align-self:center}
+.tag.late{background:var(--ns-fill);color:#fff} .tag.soon{background:var(--wip-fill);color:#2a1f00} .tag.ok{background:var(--ok-fill);color:#fff} .tag.far{color:var(--muted)}
+.na{min-height:54px;border-radius:5px;background:repeating-linear-gradient(135deg,var(--na) 0 6px,transparent 6px 12px);display:grid;place-items:center;color:var(--muted);font-size:12px}
+.dim{opacity:.3}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px}
+
+.up{display:grid}
+.up a{all:unset;cursor:pointer;display:grid;grid-template-columns:72px 64px 1fr auto;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+.up a:last-child{border-bottom:0}
+.up a:hover{background:var(--bg)}
+.up a:focus-visible{outline:2px solid var(--accent)}
+.up .d{font-family:var(--f-mono);font-size:12.5px;font-weight:600}
+.up .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.up .w{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12px;white-space:nowrap}
+@media (max-width:560px){.up a{grid-template-columns:64px 1fr}.up .tg,.up .w{display:none}}
+
+dialog{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:0;width:min(520px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(8,14,22,.5)}
+form.f{display:grid;gap:14px;padding:18px}
+form.f h2{margin:0;font-size:18px}
+form.f .sub{font-size:12.5px;color:var(--muted);margin-top:-8px}
+.fl{font-size:12px;font-weight:600;color:var(--muted);display:grid;gap:6px}
+.pick{display:flex;flex-wrap:wrap;gap:6px}
+.pick button{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);padding:5px 11px 5px 6px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.pick button.plain{padding-left:11px}
+.pick button.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft);font-weight:600}
+.pick .s-ns.on{background:var(--ns-fill);border-color:var(--ns-fill);color:#fff;box-shadow:none}
+.pick .s-wip.on{background:var(--wip-fill);border-color:var(--wip-fill);color:#2a1f00;box-shadow:none}
+.pick .s-ok.on{background:var(--ok-fill);border-color:var(--ok-fill);color:#fff;box-shadow:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fl input,.fl textarea{font:inherit;font-size:14px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;width:100%}
+textarea{min-height:56px;resize:vertical}
+.fbtns{display:flex;gap:8px;justify-content:flex-end}
+.btn{font:inherit;font-weight:600;border:1px solid var(--accent);border-radius:5px;background:var(--accent);color:#fff;padding:8px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.dash{display:grid}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:14px;min-width:0}
+.dhead{display:flex;flex-wrap:wrap;gap:12px 0}
+.dhead div{display:grid;gap:1px;padding:0 22px;border-left:1px solid var(--line)}
+.dhead div:first-child{padding-left:0;border-left:0}
+.dhead b{font-family:var(--f-mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
+.dhead .k{font-size:11.5px;color:var(--muted)}
+.chartbox{overflow-x:auto}
+#sc{display:block;width:100%;min-width:560px;height:auto}
+#sc .g{stroke:var(--line);stroke-width:1}
+#sc .ax{fill:var(--muted);font-size:11.5px;font-family:var(--f-mono)}
+#sc .pl{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:7 5}
+#sc .ac{fill:none;stroke:var(--ok-fill);stroke-width:3}
+#sc .aa{fill:var(--ok-fill);opacity:.14;stroke:none}
+#sc .today{stroke:var(--ink);stroke-width:1.2;stroke-dasharray:3 3}
+#sc .tl{fill:var(--ink);font-size:11.5px;font-weight:600}
+#sc .dotA{fill:var(--ok-fill);stroke:var(--surface);stroke-width:2}
+#sc .dotP{fill:var(--surface);stroke:var(--accent);stroke-width:2.5}
+#sc .hl{stroke:var(--muted);stroke-width:1}
+#sc .hr{fill:var(--surface);stroke:var(--line)}
+#sc .ht{fill:var(--ink);font-size:12px;font-family:var(--f-mono)}
+#sc .hd{font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-size:13px;z-index:20}
+@media (prefers-reduced-motion:no-preference){.cell,.eng,.chip{transition:background .15s,opacity .15s,box-shadow .15s}}
+</style>
+</head>
+<body>
+<div class="band"><div class="in">
+  <div class="tb">
+    <div class="eyebrow">KAEC · Potable &amp; Irrigation · Shop drawings</div>
+    <h1>Remaining Tasks</h1>
+    <div class="sync" id="sync"><i></i><span>Connecting…</span></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b id="mSub">0/0</b><span>Drawings submitted</span></div>
+    <div class="kpi r"><b id="mLate">0</b><span>Overdue packages</span></div>
+    <div class="kpi"><b id="mWeek">0</b><span>Due in 7 days</span></div>
+    <div class="kpi"><b id="mUn">0</b><span>Unassigned</span></div>
+    <div class="progress" id="prog" aria-hidden="true"></div>
+  </div>
+</div></div>
+
+<main class="in">
+  <section class="panel" aria-label="Engineers">
+    <div class="ph"><h2>Engineers</h2><span class="hint">Tap an engineer to see only their drawings.</span></div>
+    <div class="load" id="load"></div>
+  </section>
+
+  <div class="bar" id="filterbar" hidden>
+    <span>Showing <b id="fName"></b>: <span id="fSum"></span></span>
+    <button class="chip" id="brushOn" type="button">+ Assign more drawings</button>
+    <button class="chip" id="fOff" type="button">Show everyone</button>
+  </div>
+  <div class="bar" id="brushbar" hidden>
+    <span>Assigning to <b id="brushName"></b>. Tap drawing cells to assign or unassign.</span>
+    <button class="chip" id="brushOff" type="button">Done</button>
+  </div>
+
+  <div class="tools">
+    <div class="modes" role="group" aria-label="Show">
+      <button class="chip on" data-view="all" type="button">All</button>
+      <button class="chip" data-view="late" type="button">Overdue</button>
+      <button class="chip" data-view="week" type="button">Next 7 days</button>
+      <button class="chip" data-view="un" type="button">Unassigned</button>
+      <button class="chip" data-view="open" type="button">Not submitted</button>
+    </div>
+    <input id="q" type="search" placeholder="Search element…" aria-label="Search element">
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--ns-fill)"></i>Not started</span>
+    <span><i style="background:var(--wip-fill)"></i>In progress</span>
+    <span><i style="background:var(--ok-fill)"></i>Submitted</span>
+    <span><i style="box-shadow:0 0 0 1.5px var(--ns-fill) inset"></i>Overdue</span>
+    <span><i style="background:repeating-linear-gradient(135deg,var(--line) 0 3px,transparent 3px 6px)"></i>No drawings</span>
+  </div>
+
+  <div id="matrix" style="display:grid;gap:16px"></div>
+
+  <section class="panel" aria-label="Overdue and upcoming">
+    <div class="ph"><h2>Overdue &amp; next 14 days</h2><span class="hint">Not submitted, earliest first</span></div>
+    <div class="up" id="up"></div>
+  </section>
+
+  <section aria-label="Progress dashboard" style="display:grid;gap:12px">
+    <div class="ph"><h2>Progress · planned vs submitted</h2><span class="hint">Cumulative drawings</span></div>
+    <div class="dash" id="dash"></div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <form class="f" id="form">
+    <h2 id="fTitle"></h2>
+    <div class="sub" id="fSub"></div>
+    <div class="fl">Assigned to<div class="pick" id="pEng"></div></div>
+    <div class="fl">Status<div class="pick" id="pSt"></div></div>
+    <div class="row">
+      <label class="fl">Target date<input id="iDue" type="date"></label>
+      <label class="fl">No. of drawings<input id="iN" type="number" min="0" step="1" inputmode="numeric"></label>
+    </div>
+    <label class="fl">Notes<textarea id="iNotes" maxlength="400" placeholder="e.g. waiting for consultant comments"></textarea></label>
+    <div class="fbtns"><button class="btn ghost" type="button" id="cancel">Cancel</button><button class="btn" type="submit" id="save">Save</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ===== SETTINGS for GitHub Pages =====
+   Paste your Supabase project URL and anon key below to share live data with the team.
+   Leave them empty and the tracker saves on this computer only. */
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+const SUPABASE_TABLE = "kaec_pkgs";
+
+const ENG=[["ZIAD AL ASHKAR","Ziad","ZA"],["ALI","Ali","AL"],["AHMED ESSAM","Ahmed E.","AE"],["DAVID","David","DV"],["NADA","Nada","ND"],["FAROUK","Farouk","FK"],["MELEGY","Melegy","ML"]];
+const HUE=["#2f6db0","#c26a1b","#25876a","#7d4fb8","#c2386a","#5b7f17","#1a87a3"];
+const SHORT=Object.fromEntries(ENG.map(e=>[e[0],e[1]])), INIT=Object.fromEntries(ENG.map(e=>[e[0],e[2]])), COLOR=Object.fromEntries(ENG.map((e,i)=>[e[0],HUE[i]]));
+const ST={ns:"Not started",wip:"In progress",ok:"Submitted"};
+const TYPE={C:"Concrete",R:"Reinforcement"};
+
+/* Starting schedule (used only the first time, when nothing is saved yet) */
+const SEED=(()=>{const P=[["Guard Room",[3,"","ok"],[10,"2026-11-12","ok"]],["Substation",[4,"2026-11-26","ns"],[11,"2026-12-07","ns"]],["Fence",[15,"2026-11-11","ok"],[18,"2026-12-10","wip"]],["Stairs",null,[6,"2026-12-08","wip"]],["Pump Room",null,[12,"2026-12-06","ns"]],["Electrical Room",null,[6,"2026-11-24","ns"]],["Walls",[8,"2026-11-19","wip"],[11,"2026-11-24","wip"]],["Columns",null,[4,"2026-11-29","ns"]],["Top Roof",null,[12,"2026-11-18","ns"]],["Roof",null,[24,"2026-11-23","wip"]],["Ground Floor Beams",null,[8,"2026-11-19","ns"]],["Ground Slab",null,null],["Tie Beams",null,[8,"2026-11-26","ns"]],["Foundation",null,[2,"","wip"]]];
+const I=[["Guard Room",[3,"2026-10-28","ok"],[10,"2026-11-12","ok"]],["Substation",[4,"2026-10-22","ns"],[11,"2026-12-07","ns"]],["Fence",[15,"2026-11-05","ok"],[18,"2026-12-10","wip"]],["Stairs",null,[6,"2026-12-10","wip"]],["Pump Room",null,[12,"2026-12-06","ns"]],["Electrical Room",null,[6,"2026-11-24","wip"]],["Walls",[7,"2026-11-19","wip"],[18,"2026-11-24","wip"]],["Columns",null,[4,"2026-11-29","ns"]],["Top Roof",null,[12,"2026-11-26","wip"]],["Roof",null,[24,"2026-11-26","wip"]],["Ground Floor Beams",null,[8,"2026-11-25","wip"]],["Ground Slab",null,[18,"2026-10-27","ok"]],["Tie Beams",null,[8,"2026-11-26","ns"]],["Foundation",null,[2,"","wip"]]];
+const out=[];[["Potable",0,"pot",P],["Irrigation",1,"irr",I]].forEach(([sys,so,pre,rows])=>rows.forEach(([el,c,r],i)=>[["C",c],["R",r]].forEach(([t,v])=>{if(v)out.push({id:pre+String(i+1).padStart(2,"0")+t,system:sys,sysOrder:so,element:el,order:i,type:t,dwgs:v[0],due:v[1],status:v[2],eng:"",notes:""})})));return out})();
+
+const $=id=>document.getElementById(id);
+let pk=[], store=null, loaded=false, view="all", brush="", hiEng="", editId=null, draft=null;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const T0=(()=>{const d=new Date();d.setHours(0,0,0,0);return d})();
+const pd=s=>{if(!s)return null;const d=new Date(String(s).slice(0,10)+"T00:00:00");return isNaN(d)?null:d};
+const days=p=>{const d=pd(p.due);return d?Math.round((d-T0)/864e5):null};
+const fmt=s=>{const d=pd(s);return d?d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"No date"};
+const late=p=>p.status!=="ok"&&days(p)!==null&&days(p)<0;
+const soon=p=>p.status!=="ok"&&days(p)!==null&&days(p)>=0&&days(p)<=7;
+const av=(e,sm)=>`<span class="av${sm?" sm":""}" style="background:${COLOR[e]||"#6b7785"}">${esc(INIT[e]||"?")}</span>`;
+function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2000)}
+function setSync(text,live){$("sync").classList.toggle("live",!!live);$("sync").querySelector("span").textContent=text}
+function tag(p){
+  if(p.status==="ok")return'<span class="tag ok">✓ Submitted</span>';
+  const n=days(p); if(n===null)return'<span class="tag far">No date</span>';
+  if(n<0)return`<span class="tag late">${-n}d late</span>`;
+  if(n===0)return'<span class="tag soon">Due today</span>';
+  return`<span class="tag ${n<=7?"soon":"far"}">in ${n}d</span>`;
+}
+function match(p){
+  if(view==="late"&&!late(p))return false;
+  if(view==="week"&&!soon(p))return false;
+  if(view==="un"&&(p.eng||p.status==="ok"))return false;
+  if(view==="open"&&p.status==="ok")return false;
+  if(hiEng&&p.eng!==hiEng)return false;
+  return true;
+}
+
+function render(){
+  const n=a=>a.reduce((s,p)=>s+(+p.dwgs||0),0);
+  const tot=n(pk), sub=n(pk.filter(p=>p.status==="ok")), wip=n(pk.filter(p=>p.status==="wip"));
+  $("mSub").textContent=`${sub}/${tot}`;
+  $("mLate").textContent=pk.filter(late).length;
+  $("mWeek").textContent=pk.filter(soon).length;
+  $("mUn").textContent=pk.filter(p=>!p.eng&&p.status!=="ok").length;
+  $("prog").innerHTML=tot?`<i style="width:${sub/tot*100}%;background:var(--ok-fill)"></i><i style="width:${wip/tot*100}%;background:var(--wip-fill)"></i>`:"";
+
+  $("load").innerHTML=ENG.map(([e])=>{
+    const m=pk.filter(p=>p.eng===e), o=m.filter(p=>p.status!=="ok"), lt=m.filter(late).length;
+    return `<button type="button" class="eng${brush===e?" brush":hiEng===e?" on":""}" data-eng="${esc(e)}" aria-pressed="${hiEng===e||brush===e}" title="${esc(e)}">
+      ${av(e)}<span class="n">${esc(e)}</span>
+      <span class="c">${o.length?`${o.length} open · ${n(o)} dwgs`:"Free"}${lt?` · <em>${lt} late</em>`:""}</span></button>`}).join("");
+  $("brushbar").hidden=!brush; $("brushName").textContent=brush;
+  $("filterbar").hidden=!hiEng||!!brush;
+  if(hiEng){const m=pk.filter(p=>p.eng===hiEng),o=m.filter(p=>p.status!=="ok");$("fName").textContent=hiEng;
+    $("fSum").textContent=m.length?`${o.length} open (${n(o)} dwgs), ${m.filter(late).length} overdue, ${m.length-o.length} submitted`:"nothing assigned yet";}
+
+  const q=$("q").value.trim().toLowerCase();
+  const systems=[...new Set(pk.slice().sort((a,b)=>(a.sysOrder??0)-(b.sysOrder??0)).map(p=>p.system))];
+  if(!pk.length){$("matrix").innerHTML=`<div class="empty">${loaded?"No drawing packages yet.":"Loading drawing packages…"}</div>`}
+  else{
+    $("matrix").innerHTML=systems.map(sys=>{
+      const items=pk.filter(p=>p.system===sys);
+      const els=[...new Map(items.slice().sort((a,b)=>a.order-b.order).map(p=>[p.element,1])).keys()]
+        .filter(e=>(!q||e.toLowerCase().includes(q))&&(brush||(view==="all"&&!hiEng)||items.some(p=>p.element===e&&+p.dwgs&&match(p))));
+      if(!els.length&&(hiEng||view!=="all"||q))return"";
+      const sd=n(items.filter(p=>p.status==="ok")), td=n(items);
+      const rows=els.map(el=>`<tr><td class="el">${esc(el)}</td>${["C","R"].map(t=>{
+        const p=items.find(x=>x.element===el&&x.type===t);
+        if(!p||!+p.dwgs)return`<td><div class="na">—</div></td>`;
+        const who=p.eng?`<span class="who">${av(p.eng,1)}${esc(SHORT[p.eng]||p.eng)}</span>`:`<span class="who none">+ Assign</span>`;
+        return`<td><button type="button" class="cell st-${esc(p.status)}${late(p)?" late":""}${brush||match(p)?"":" dim"}" data-id="${esc(p.id)}" title="${esc(p.notes||ST[p.status])}">
+          <span class="d">${esc(fmt(p.due))}</span><span class="k">${esc(p.dwgs)} dwg${+p.dwgs===1?"":"s"}</span>${who}${tag(p)}</button></td>`}).join("")}</tr>`).join("");
+      return`<section class="sys"><h3>${esc(sys)}<span>${sd} / ${td} drawings submitted</span></h3><div class="box"><table><colgroup><col class="c1"><col><col></colgroup>
+        <thead><tr><th>Element</th><th>Concrete</th><th>Reinforcement</th></tr></thead><tbody>${rows}</tbody></table></div></section>`}).join("");
+    if(!$("matrix").innerHTML.trim())$("matrix").innerHTML=`<div class="empty">${hiEng&&!pk.some(p=>p.eng===hiEng)?`No drawings assigned to ${esc(hiEng)} yet. Use “+ Assign more drawings” above.`:"No drawings match this filter."}</div>`;
+  }
+
+  const ups=pk.filter(p=>p.status!=="ok"&&days(p)!==null&&days(p)<=14&&(!hiEng||p.eng===hiEng)).sort((a,b)=>days(a)-days(b));
+  $("up").innerHTML=ups.length?ups.map(p=>`<a tabindex="0" data-id="${esc(p.id)}"><span class="d" style="color:${late(p)?"var(--ns)":"inherit"}">${esc(fmt(p.due))}</span><span class="tg">${tag(p)}</span>
+    <span class="t">${esc(p.system)} · ${esc(p.element)} · ${TYPE[p.type]} (${esc(p.dwgs)})</span><span class="w">${p.eng?av(p.eng,1)+esc(SHORT[p.eng]||p.eng):"Unassigned"}</span></a>`).join("")
+    :`<div class="hint" style="padding:8px 4px">${loaded?"Nothing due in the next 14 days.":"Loading…"}</div>`;
+  renderDash();
+}
+function renderDash(){
+  const el=$("dash"); if(!pk.length){el.innerHTML="";return}
+  const DAY=864e5, dated=pk.filter(p=>(pd(p.due)||p.status==="ok")&&+p.dwgs);
+  const total=dated.reduce((s,p)=>s+(+p.dwgs),0); if(!total){el.innerHTML="";return}
+  const first=Math.min(...pk.filter(p=>pd(p.due)).map(p=>+pd(p.due)),+T0);
+  const planEv=dated.map(p=>[+(pd(p.due)||first),+p.dwgs]).sort((a,b)=>a[0]-b[0]);
+  const actEv=pk.filter(p=>p.status==="ok"&&+p.dwgs).map(p=>[+(pd(p.submittedAt)||pd(p.due)||first),+p.dwgs]).map(([d,v])=>[Math.min(d,+T0),v]).sort((a,b)=>a[0]-b[0]);
+  const t0=Math.min(planEv[0][0],actEv[0]?.[0]??Infinity,+T0)-3*DAY, t1=Math.max(planEv[planEv.length-1][0],+T0)+3*DAY;
+  const cum=(ev,t)=>ev.reduce((s,[d,v])=>s+(d<=t?v:0),0);
+  const W=920,H=330,L=48,R=20,T=18,B=34, X=t=>L+(t-t0)/(t1-t0)*(W-L-R), Y=v=>H-B-v/total*(H-T-B);
+  const step=(ev,end)=>{let c=0,d=`M${X(t0).toFixed(1)},${Y(0).toFixed(1)}`;for(const[t,v]of ev){d+=`H${X(t).toFixed(1)}`;c+=v;d+=`V${Y(c).toFixed(1)}`}return d+`H${X(end).toFixed(1)}`};
+  const planD=step(planEv,t1), actD=step(actEv,+T0);
+  const actArea=actD+`V${Y(0)}Z`;
+  const span=(t1-t0)/DAY, every=span>120?28:span>60?14:7;
+  let xt="";for(let t=+T0-Math.floor((+T0-t0)/DAY/every)*every*DAY;t<=t1;t+=every*DAY){if(t<t0)continue;
+    xt+=`<line x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H-B}" class="g"/><text x="${X(t)}" y="${H-B+18}" text-anchor="middle" class="ax">${new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</text>`}
+  let yt="";for(let k=0;k<=4;k++){const v=Math.round(total*k/4);yt+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end" class="ax">${v}</text>`}
+  const planNow=cum(planEv,+T0), actNow=cum(actEv,+T0), gap=actNow-planNow, pct=v=>Math.round(v/total*100);
+  el.innerHTML=`<div class="dcard">
+    <div class="dhead">
+      <div><span class="k">Planned by today</span><b>${planNow}</b><span class="k">${pct(planNow)}%</span></div>
+      <div><span class="k">Submitted</span><b style="color:var(--ok)">${actNow}</b><span class="k">${pct(actNow)}%</span></div>
+      <div><span class="k">${gap<0?"Behind plan":"Ahead of plan"}</span><b style="color:${gap<0?"var(--ns)":"var(--ok)"}">${gap<0?gap:"+"+gap}</b><span class="k">drawings</span></div>
+      <div><span class="k">Total</span><b>${total}</b><span class="k">drawings</span></div>
+    </div>
+    <div class="chartbox"><svg id="sc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Planned vs submitted drawings over time">
+      ${yt}${xt}
+      <path d="${actArea}" class="aa"/>
+      <path d="${planD}" class="pl"/>
+      <path d="${actD}" class="ac"/>
+      <line x1="${X(+T0)}" x2="${X(+T0)}" y1="${T}" y2="${H-B}" class="today"/>
+      <text x="${X(+T0)+5}" y="${T+11}" class="tl">Today</text>
+      <circle cx="${X(+T0)}" cy="${Y(actNow)}" r="5" class="dotA"/>
+      <circle cx="${X(+T0)}" cy="${Y(planNow)}" r="4.5" class="dotP"/>
+      <g id="hov" visibility="hidden"><line id="hl" y1="${T}" y2="${H-B}" class="hl"/><rect id="hr" rx="4" height="46" width="150" class="hr"/><text id="ht" class="ht"></text></g>
+      <rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent" id="hit"/>
+    </svg></div>
+    <div class="legend"><span><i style="background:var(--accent);height:3px;vertical-align:3px"></i>Planned (target dates)</span><span><i style="background:var(--ok-fill);height:3px;vertical-align:3px"></i>Submitted</span>${pk.some(p=>!pd(p.due)&&p.status!=="ok"&&+p.dwgs)?`<span>${pk.filter(p=>!pd(p.due)&&p.status!=="ok").reduce((s,p)=>s+(+p.dwgs||0),0)} drawings without a target date are not on the graph</span>`:""}</div>
+  </div>`;
+  const svg=$("sc"),hov=$("hov");
+  $("hit").onmousemove=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,t=t0+(x-L)/(W-L-R)*(t1-t0);
+    const pv=cum(planEv,t),av=t<=+T0?cum(actEv,t):null;hov.setAttribute("visibility","visible");
+    $("hl").setAttribute("x1",x);$("hl").setAttribute("x2",x);const bx=x+160>W?x-158:x+8;$("hr").setAttribute("x",bx);$("hr").setAttribute("y",T+4);
+    $("ht").innerHTML=`<tspan x="${bx+10}" y="${T+20}" class="hd">${new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</tspan><tspan x="${bx+10}" y="${T+38}">Plan ${pv}${av!==null?" · Done "+av:""}</tspan>`};
+  $("hit").onmouseleave=()=>hov.setAttribute("visibility","hidden");
+}
+/* ===== storage: Claude page DB → Supabase → this computer ===== */
+const LS="kaec-pkgs-v1";
+function setAll(list){pk=list;loaded=true;render()}
+async function startClaude(){
+  if(!window.claude||!window.claude.use)return false;
+  const db=await window.claude.use("db").catch(()=>null); if(!db)return false;
+  const col=db.collection("pkgs");
+  const timer=setTimeout(()=>setSync("Can't reach the shared schedule yet. Still trying…"),10000);
+  col.onSnapshot(s=>{pk=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache){clearTimeout(timer);loaded=true;setSync("Shared with the team · live",true)}render()},
+    ()=>{clearTimeout(timer);loaded=true;setSync("Couldn't load the schedule. Reopen the page to try again.");render()});
+  store={patch:(id,d)=>col.doc(id).update(d)}; return true;
+}
+async function startSupabase(){
+  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!window.supabase)return false;
+  const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  const fromRow=r=>({id:r.id,system:r.system,sysOrder:r.sys_order,element:r.element,order:r.ord,type:r.type,dwgs:r.dwgs,due:r.due||"",status:r.status,eng:r.eng||"",notes:r.notes||"",submittedAt:r.submitted_at||""});
+  const toRow=d=>{const r={};for(const[k,v]of Object.entries(d)){if(k==="updated")r.updated_at=v;else if(k==="due")r.due=v||null;else if(k==="submittedAt")r.submitted_at=v||null;else r[k]=v}return r};
+  async function pull(){const{data,error}=await sb.from(SUPABASE_TABLE).select("*");if(error){setSync("Couldn't load from Supabase: "+error.message);loaded=true;render();return}
+    setAll(data.map(fromRow));setSync("Shared with the team · live",true)}
+  await pull();
+  sb.channel("kaec").on("postgres_changes",{event:"*",schema:"public",table:SUPABASE_TABLE},()=>pull()).subscribe();
+  store={patch:async(id,d)=>{const p=pk.find(x=>x.id===id);Object.assign(p,d);render();const{error}=await sb.from(SUPABASE_TABLE).update(toRow(d)).eq("id",id);if(error){await pull();throw error}}};
+  return true;
+}
+function startLocal(){
+  let list=null;try{list=JSON.parse(localStorage.getItem(LS)||"null")}catch(e){}
+  setAll(Array.isArray(list)&&list.length?list:SEED.map(x=>({...x})));
+  setSync("Saved on this computer only");
+  store={patch:async(id,d)=>{Object.assign(pk.find(x=>x.id===id),d);try{localStorage.setItem(LS,JSON.stringify(pk))}catch(e){}render()}};
+}
+async function patch(id,data){const p=pk.find(x=>x.id===id);if(!p)return;data.updated=new Date().toISOString();
+  if(data.status&&data.status!==p.status){const d=new Date();data.submittedAt=data.status==="ok"?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:""}
+  await store.patch(id,data)}
+function fail(e){toast(e&&e.code==="permission_denied"?"You have view-only access.":"Couldn't save. Check your connection and try again.")}
+
+/* ===== edit dialog ===== */
+function openEdit(id){
+  const p=pk.find(x=>x.id===id); if(!p)return;
+  editId=id; draft={eng:p.eng||"",status:p.status};
+  $("fTitle").textContent=`${p.element} · ${TYPE[p.type]}`;
+  $("fSub").textContent=`${p.system} · ${p.dwgs} drawing${+p.dwgs===1?"":"s"}`;
+  $("iDue").value=p.due?String(p.due).slice(0,10):""; $("iN").value=p.dwgs??""; $("iNotes").value=p.notes||"";
+  paintPick(); $("dlg").showModal();
+}
+function paintPick(){
+  $("pEng").innerHTML=ENG.map(([e,s])=>`<button type="button" data-e="${esc(e)}" class="${draft.eng===e?"on":""}">${av(e,1)}${esc(s)}</button>`).join("")
+    +`<button type="button" data-e="" class="plain ${draft.eng?"":"on"}">Unassigned</button>`;
+  $("pSt").innerHTML=Object.entries(ST).map(([k,v])=>`<button type="button" data-s="${k}" class="plain s-${k}${draft.status===k?" on":""}">${v}</button>`).join("");
+}
+$("pEng").onclick=e=>{const b=e.target.closest("[data-e]");if(!b)return;draft.eng=b.dataset.e;paintPick()};
+$("pSt").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;draft.status=b.dataset.s;paintPick()};
+$("cancel").onclick=()=>$("dlg").close();
+$("form").onsubmit=async e=>{
+  e.preventDefault(); $("save").disabled=true;
+  try{await patch(editId,{eng:draft.eng,status:draft.status,due:$("iDue").value,dwgs:$("iN").value===""?0:Number($("iN").value),notes:$("iNotes").value.trim()});$("dlg").close();toast("Saved")}catch(err){fail(err)}
+  $("save").disabled=false;
+};
+
+/* ===== interactions ===== */
+$("matrix").addEventListener("click",async e=>{
+  const c=e.target.closest(".cell"); if(!c)return;
+  const id=c.dataset.id;
+  if(brush){const p=pk.find(x=>x.id===id),to=p.eng===brush?"":brush;
+    try{await patch(id,{eng:to});toast(to?`${p.element} ${TYPE[p.type]} → ${SHORT[to]}`:"Unassigned")}catch(err){fail(err)}}
+  else openEdit(id);
+});
+$("up").addEventListener("click",e=>{const a=e.target.closest("[data-id]");if(a)openEdit(a.dataset.id)});
+$("up").addEventListener("keydown",e=>{if(e.key==="Enter"){const a=e.target.closest("[data-id]");if(a)openEdit(a.dataset.id)}});
+$("load").addEventListener("click",e=>{const b=e.target.closest("[data-eng]");if(!b)return;const en=b.dataset.eng;
+  if(brush){brush=brush===en?"":en;if(brush)hiEng=brush;render();return}
+  hiEng=hiEng===en?"":en;render();
+  if(hiEng)$("matrix").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"})});
+$("brushOn").onclick=()=>{brush=hiEng;render()};
+$("fOff").onclick=()=>{hiEng="";render()};
+$("brushOff").onclick=()=>{brush="";render()};
+document.querySelector(".modes").addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(!b)return;view=b.dataset.view;
+  document.querySelectorAll("[data-view]").forEach(x=>x.classList.toggle("on",x===b));render()});
+$("q").oninput=render;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("dlg").open&&(brush||hiEng)){if(brush)brush="";else hiEng="";render()}});
+
+render();
+(async()=>{try{if(await startClaude())return;if(await startSupabase())return}catch(e){} startLocal()})();
+</script>
+</body>
+</html>
