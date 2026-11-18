@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>KAEC Remaining Tasks</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <style>
 /* Layout: navy title band with KPIs (like the Excel header row) → engineer strip → one schedule table per system → deadlines list */
 :root{
@@ -86,7 +86,7 @@ col.c1{width:22%}
 th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg)}
 td{border-bottom:1px solid var(--line);padding:5px 6px}
 tr:last-child td{border-bottom:0}
-tbody tr:nth-child(even) td.el{background:color-mix(in srgb,var(--bg) 50%,transparent)}
+.sys tbody tr:nth-child(even) td.el{background:color-mix(in srgb,var(--bg) 50%,transparent)}
 td.el{padding:8px 12px;font-weight:600;font-size:13.5px}
 .cell{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:3px 8px;width:100%;min-height:54px;padding:7px 10px 7px 12px;border-radius:5px;border-left:5px solid;align-content:center;position:relative}
 .cell:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -155,6 +155,35 @@ textarea{min-height:56px;resize:vertical}
 #sc .hr{fill:var(--surface);stroke:var(--line)}
 #sc .ht{fill:var(--ink);font-size:12px;font-family:var(--f-mono)}
 #sc .hd{font-weight:600}
+.tright{display:flex;gap:8px;flex:0 1 380px;min-width:0}
+.tright input{flex:1}
+.sys h3 .sn{flex:1;font-family:var(--f-ui);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--band-ink)}
+.hbtn{font:inherit;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;background:transparent;color:var(--band-ink);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 10px;cursor:pointer}
+.hbtn:hover{background:rgba(255,255,255,.12)}
+button.na{all:unset;box-sizing:border-box;cursor:pointer;width:100%;min-height:54px;border-radius:5px;background:repeating-linear-gradient(135deg,var(--na) 0 6px,transparent 6px 12px);display:grid;place-items:center;color:var(--muted);font-size:14px}
+button.na:hover{color:var(--accent);box-shadow:0 0 0 1px var(--line) inset}
+button.na:focus-visible{outline:2px solid var(--accent)}
+.stack{display:inline-flex}
+.stack .av+.av{margin-left:-3px;box-shadow:0 0 0 2px var(--surface)}
+.splitk{color:var(--accent);font-weight:700;margin-right:4px}
+.f0{display:grid;gap:14px}
+.splitb{justify-self:start;font-size:13px}
+.btn.danger{background:transparent;color:var(--ns);border-color:var(--line)}
+.partbox{overflow-x:auto;border:1px solid var(--line);border-radius:5px}
+.pt{min-width:600px;width:100%;table-layout:auto}
+.pt th{padding:6px 8px}
+.pt td{padding:4px;border-bottom:1px solid var(--line)}
+.pt input,.pt select{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 6px;width:100%;min-width:0}
+.pt input.n{width:58px}
+.pt td:nth-child(3) select{min-width:110px}
+.pt td:nth-child(4) select{min-width:122px}
+.pt td:first-child input{min-width:130px}
+.pt select.s-ns{color:var(--ns);font-weight:600} .pt select.s-wip{color:var(--wip);font-weight:600} .pt select.s-ok{color:var(--ok);font-weight:600}
+.pt .x{font:inherit;font-size:16px;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px 6px}
+.pt .x:hover{color:var(--ns)}
+.ainput{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;width:100%}
+.fl select{font:inherit;font-size:14px;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;width:100%}
+dialog{width:min(680px,calc(100vw - 32px))}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-size:13px;z-index:20}
 @media (prefers-reduced-motion:no-preference){.cell,.eng,.chip{transition:background .15s,opacity .15s,box-shadow .15s}}
 </style>
@@ -199,14 +228,14 @@ textarea{min-height:56px;resize:vertical}
       <button class="chip" data-view="un" type="button">Unassigned</button>
       <button class="chip" data-view="open" type="button">Not submitted</button>
     </div>
-    <input id="q" type="search" placeholder="Search element…" aria-label="Search element">
+    <div class="tright"><input id="q" type="search" placeholder="Search element…" aria-label="Search element"><button class="btn" type="button" id="addElTop">+ Add element</button></div>
   </div>
   <div class="legend">
     <span><i style="background:var(--ns-fill)"></i>Not started</span>
     <span><i style="background:var(--wip-fill)"></i>In progress</span>
     <span><i style="background:var(--ok-fill)"></i>Submitted</span>
     <span><i style="box-shadow:0 0 0 1.5px var(--ns-fill) inset"></i>Overdue</span>
-    <span><i style="background:repeating-linear-gradient(135deg,var(--line) 0 3px,transparent 3px 6px)"></i>No drawings</span>
+    <span><i style="background:repeating-linear-gradient(135deg,var(--line) 0 3px,transparent 3px 6px)"></i>No drawings (tap + to add)</span><span><b style="color:var(--accent)">⑂</b> Split into parts</span>
   </div>
 
   <div id="matrix" style="display:grid;gap:16px"></div>
@@ -226,24 +255,51 @@ textarea{min-height:56px;resize:vertical}
   <form class="f" id="form">
     <h2 id="fTitle"></h2>
     <div class="sub" id="fSub"></div>
-    <div class="fl">Assigned to<div class="pick" id="pEng"></div></div>
-    <div class="fl">Status<div class="pick" id="pSt"></div></div>
-    <div class="row">
-      <label class="fl">Target date<input id="iDue" type="date"></label>
-      <label class="fl">No. of drawings<input id="iN" type="number" min="0" step="1" inputmode="numeric"></label>
+    <div id="single" class="f0">
+      <div class="fl">Assigned to<div class="pick" id="pEng"></div></div>
+      <div class="fl">Status<div class="pick" id="pSt"></div></div>
+      <div class="row">
+        <label class="fl">Target date<input id="iDue" type="date"></label>
+        <label class="fl">No. of drawings<input id="iN" type="number" min="0" step="1" inputmode="numeric"></label>
+      </div>
+      <button type="button" class="btn ghost splitb" id="splitBtn">⑂ Split into parts (share between engineers)</button>
+    </div>
+    <div id="splitBox" class="f0" hidden>
+      <div class="partbox"><table class="pt"><thead><tr><th>Part</th><th>Dwgs</th><th>Engineer</th><th>Status</th><th>Target</th><th></th></tr></thead><tbody id="parts"></tbody></table></div>
+      <button type="button" class="btn ghost splitb" id="addPart">+ Add part</button>
     </div>
     <label class="fl">Notes<textarea id="iNotes" maxlength="400" placeholder="e.g. waiting for consultant comments"></textarea></label>
-    <div class="fbtns"><button class="btn ghost" type="button" id="cancel">Cancel</button><button class="btn" type="submit" id="save">Save</button></div>
+    <div class="fbtns"><button class="btn danger" type="button" id="delPkg">Delete</button><span style="flex:1"></span><button class="btn ghost" type="button" id="cancel">Cancel</button><button class="btn" type="submit" id="save">Save</button></div>
+  </form>
+</dialog>
+
+<dialog id="adlg">
+  <form class="f" id="aForm">
+    <h2 id="aTitle">Add element</h2>
+    <div class="row">
+      <label class="fl">System<select id="aSys"></select></label>
+      <label class="fl">Element<input id="aEl" maxlength="80" placeholder="e.g. Retaining Wall"></label>
+    </div>
+    <input id="aNewSys" maxlength="60" placeholder="New system name, e.g. Fire Fighting" aria-label="New system name" hidden class="ainput">
+    <div class="row" id="aCbox">
+      <label class="fl">Concrete drawings<input id="aCn" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></label>
+      <label class="fl">Concrete target<input id="aCd" type="date"></label>
+    </div>
+    <div class="row" id="aRbox">
+      <label class="fl">Reinforcement drawings<input id="aRn" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></label>
+      <label class="fl">Reinforcement target<input id="aRd" type="date"></label>
+    </div>
+    <div class="fbtns"><button class="btn ghost" type="button" id="aCancel">Cancel</button><button class="btn" type="submit" id="aSave">Add</button></div>
   </form>
 </dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 /* ===== SETTINGS for GitHub Pages =====
-   Paste your Supabase project URL and anon key below to share live data with the team.
+   Paste your Supabase project URL and anon/publishable key below to share live data with the team.
    Leave them empty and the tracker saves on this computer only. */
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://fyvywnjzajlucmouabhi.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_m7wC1E8B_lDQ8Lq-nPM0nQ_6J4qM5Jv";
 const SUPABASE_TABLE = "kaec_pkgs";
 
 const ENG=[["ZIAD AL ASHKAR","Ziad","ZA"],["ALI","Ali","AL"],["AHMED ESSAM","Ahmed E.","AE"],["DAVID","David","DV"],["NADA","Nada","ND"],["FAROUK","Farouk","FK"],["MELEGY","Melegy","ML"]];
@@ -255,20 +311,35 @@ const TYPE={C:"Concrete",R:"Reinforcement"};
 /* Starting schedule (used only the first time, when nothing is saved yet) */
 const SEED=(()=>{const P=[["Guard Room",[3,"","ok"],[10,"2026-11-12","ok"]],["Substation",[4,"2026-11-26","ns"],[11,"2026-12-07","ns"]],["Fence",[15,"2026-11-11","ok"],[18,"2026-12-10","wip"]],["Stairs",null,[6,"2026-12-08","wip"]],["Pump Room",null,[12,"2026-12-06","ns"]],["Electrical Room",null,[6,"2026-11-24","ns"]],["Walls",[8,"2026-11-19","wip"],[11,"2026-11-24","wip"]],["Columns",null,[4,"2026-11-29","ns"]],["Top Roof",null,[12,"2026-11-18","ns"]],["Roof",null,[24,"2026-11-23","wip"]],["Ground Floor Beams",null,[8,"2026-11-19","ns"]],["Ground Slab",null,null],["Tie Beams",null,[8,"2026-11-26","ns"]],["Foundation",null,[2,"","wip"]]];
 const I=[["Guard Room",[3,"2026-10-28","ok"],[10,"2026-11-12","ok"]],["Substation",[4,"2026-10-22","ns"],[11,"2026-12-07","ns"]],["Fence",[15,"2026-11-05","ok"],[18,"2026-12-10","wip"]],["Stairs",null,[6,"2026-12-10","wip"]],["Pump Room",null,[12,"2026-12-06","ns"]],["Electrical Room",null,[6,"2026-11-24","wip"]],["Walls",[7,"2026-11-19","wip"],[18,"2026-11-24","wip"]],["Columns",null,[4,"2026-11-29","ns"]],["Top Roof",null,[12,"2026-11-26","wip"]],["Roof",null,[24,"2026-11-26","wip"]],["Ground Floor Beams",null,[8,"2026-11-25","wip"]],["Ground Slab",null,[18,"2026-10-27","ok"]],["Tie Beams",null,[8,"2026-11-26","ns"]],["Foundation",null,[2,"","wip"]]];
-const out=[];[["Potable",0,"pot",P],["Irrigation",1,"irr",I]].forEach(([sys,so,pre,rows])=>rows.forEach(([el,c,r],i)=>[["C",c],["R",r]].forEach(([t,v])=>{if(v)out.push({id:pre+String(i+1).padStart(2,"0")+t,system:sys,sysOrder:so,element:el,order:i,type:t,dwgs:v[0],due:v[1],status:v[2],eng:"",notes:""})})));return out})();
+const out=[];[["Potable",0,"pot",P],["Irrigation",1,"irr",I]].forEach(([sys,so,pre,rows])=>rows.forEach(([el,c,r],i)=>[["C",c],["R",r]].forEach(([t,v])=>{if(v)out.push({id:pre+String(i+1).padStart(2,"0")+t,system:sys,sysOrder:so,element:el,order:i,type:t,dwgs:v[0],due:v[1],status:v[2],eng:"",notes:"",parent:"",part:""})})));return out})();
 
 const $=id=>document.getElementById(id);
-let pk=[], store=null, loaded=false, view="all", brush="", hiEng="", editId=null, draft=null;
+let pk=[], U=[], store=null, loaded=false, view="all", brush="", hiEng="", editId=null, draft=null, delArmed=false;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const T0=(()=>{const d=new Date();d.setHours(0,0,0,0);return d})();
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const pd=s=>{if(!s)return null;const d=new Date(String(s).slice(0,10)+"T00:00:00");return isNaN(d)?null:d};
 const days=p=>{const d=pd(p.due);return d?Math.round((d-T0)/864e5):null};
 const fmt=s=>{const d=pd(s);return d?d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"No date"};
 const late=p=>p.status!=="ok"&&days(p)!==null&&days(p)<0;
 const soon=p=>p.status!=="ok"&&days(p)!==null&&days(p)>=0&&days(p)<=7;
-const av=(e,sm)=>`<span class="av${sm?" sm":""}" style="background:${COLOR[e]||"#6b7785"}">${esc(INIT[e]||"?")}</span>`;
-function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2000)}
+const av=(e,sm)=>`<span class="av${sm?" sm":""}" style="background:${COLOR[e]||"#6b7785"}" title="${esc(e)}">${esc(INIT[e]||"?")}</span>`;
+const sum=a=>a.reduce((s,p)=>s+(+p.dwgs||0),0);
+const newId=()=>"x"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const partsOf=id=>pk.filter(p=>p.parent===id).sort((a,b)=>(a.order??0)-(b.order??0));
+const isPkg=p=>!p.parent;
+const label=p=>p.parent?`${p.element} · ${TYPE[p.type]} · ${p.part||"Part"}`:`${p.element} · ${TYPE[p.type]}`;
+function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2200)}
 function setSync(text,live){$("sync").classList.toggle("live",!!live);$("sync").querySelector("span").textContent=text}
+
+/* a package's combined view: its own fields, or the sum of its parts */
+function agg(p){
+  const ps=partsOf(p.id); if(!ps.length)return{...p,units:[p],split:false};
+  const st=ps.every(x=>x.status==="ok")?"ok":ps.every(x=>x.status==="ns")?"ns":"wip";
+  const open=ps.filter(x=>x.status!=="ok"&&pd(x.due)).sort((a,b)=>pd(a.due)-pd(b.due));
+  const all=ps.filter(x=>pd(x.due)).sort((a,b)=>pd(b.due)-pd(a.due));
+  return{...p,units:ps,split:true,dwgs:sum(ps),status:st,due:open[0]?.due||all[0]?.due||"",eng:[...new Set(ps.map(x=>x.eng).filter(Boolean))]};
+}
 function tag(p){
   if(p.status==="ok")return'<span class="tag ok">✓ Submitted</span>';
   const n=days(p); if(n===null)return'<span class="tag far">No date</span>';
@@ -276,68 +347,71 @@ function tag(p){
   if(n===0)return'<span class="tag soon">Due today</span>';
   return`<span class="tag ${n<=7?"soon":"far"}">in ${n}d</span>`;
 }
-function match(p){
-  if(view==="late"&&!late(p))return false;
-  if(view==="week"&&!soon(p))return false;
-  if(view==="un"&&(p.eng||p.status==="ok"))return false;
-  if(view==="open"&&p.status==="ok")return false;
-  if(hiEng&&p.eng!==hiEng)return false;
+function matchU(u){
+  if(view==="late"&&!late(u))return false;
+  if(view==="week"&&!soon(u))return false;
+  if(view==="un"&&(u.eng||u.status==="ok"))return false;
+  if(view==="open"&&u.status==="ok")return false;
+  if(hiEng&&u.eng!==hiEng)return false;
   return true;
 }
 
 function render(){
-  const n=a=>a.reduce((s,p)=>s+(+p.dwgs||0),0);
-  const tot=n(pk), sub=n(pk.filter(p=>p.status==="ok")), wip=n(pk.filter(p=>p.status==="wip"));
+  U=pk.filter(p=>p.parent?pk.some(x=>x.id===p.parent):!pk.some(c=>c.parent===p.id));
+  const tot=sum(U), sub=sum(U.filter(p=>p.status==="ok")), wip=sum(U.filter(p=>p.status==="wip"));
   $("mSub").textContent=`${sub}/${tot}`;
-  $("mLate").textContent=pk.filter(late).length;
-  $("mWeek").textContent=pk.filter(soon).length;
-  $("mUn").textContent=pk.filter(p=>!p.eng&&p.status!=="ok").length;
+  $("mLate").textContent=U.filter(late).length;
+  $("mWeek").textContent=U.filter(soon).length;
+  $("mUn").textContent=U.filter(p=>!p.eng&&p.status!=="ok").length;
   $("prog").innerHTML=tot?`<i style="width:${sub/tot*100}%;background:var(--ok-fill)"></i><i style="width:${wip/tot*100}%;background:var(--wip-fill)"></i>`:"";
 
   $("load").innerHTML=ENG.map(([e])=>{
-    const m=pk.filter(p=>p.eng===e), o=m.filter(p=>p.status!=="ok"), lt=m.filter(late).length;
+    const m=U.filter(p=>p.eng===e), o=m.filter(p=>p.status!=="ok"), lt=m.filter(late).length;
     return `<button type="button" class="eng${brush===e?" brush":hiEng===e?" on":""}" data-eng="${esc(e)}" aria-pressed="${hiEng===e||brush===e}" title="${esc(e)}">
       ${av(e)}<span class="n">${esc(e)}</span>
-      <span class="c">${o.length?`${o.length} open · ${n(o)} dwgs`:"Free"}${lt?` · <em>${lt} late</em>`:""}</span></button>`}).join("");
+      <span class="c">${o.length?`${o.length} open · ${sum(o)} dwgs`:"Free"}${lt?` · <em>${lt} late</em>`:""}</span></button>`}).join("");
   $("brushbar").hidden=!brush; $("brushName").textContent=brush;
   $("filterbar").hidden=!hiEng||!!brush;
-  if(hiEng){const m=pk.filter(p=>p.eng===hiEng),o=m.filter(p=>p.status!=="ok");$("fName").textContent=hiEng;
-    $("fSum").textContent=m.length?`${o.length} open (${n(o)} dwgs), ${m.filter(late).length} overdue, ${m.length-o.length} submitted`:"nothing assigned yet";}
+  if(hiEng){const m=U.filter(p=>p.eng===hiEng),o=m.filter(p=>p.status!=="ok");$("fName").textContent=hiEng;
+    $("fSum").textContent=m.length?`${o.length} open (${sum(o)} dwgs), ${m.filter(late).length} overdue, ${m.length-o.length} submitted`:"nothing assigned yet";}
 
-  const q=$("q").value.trim().toLowerCase();
-  const systems=[...new Set(pk.slice().sort((a,b)=>(a.sysOrder??0)-(b.sysOrder??0)).map(p=>p.system))];
-  if(!pk.length){$("matrix").innerHTML=`<div class="empty">${loaded?"No drawing packages yet.":"Loading drawing packages…"}</div>`}
+  const q=$("q").value.trim().toLowerCase(), P=pk.filter(isPkg);
+  const sysList=[...new Map(P.slice().sort((a,b)=>(a.sysOrder??0)-(b.sysOrder??0)).map(p=>[p.system,1])).keys()];
+  if(!P.length){$("matrix").innerHTML=`<div class="empty">${loaded?"No drawing packages yet. Use “+ Add element”.":"Loading drawing packages…"}</div>`}
   else{
-    $("matrix").innerHTML=systems.map(sys=>{
-      const items=pk.filter(p=>p.system===sys);
-      const els=[...new Map(items.slice().sort((a,b)=>a.order-b.order).map(p=>[p.element,1])).keys()]
-        .filter(e=>(!q||e.toLowerCase().includes(q))&&(brush||(view==="all"&&!hiEng)||items.some(p=>p.element===e&&+p.dwgs&&match(p))));
+    $("matrix").innerHTML=sysList.map(sys=>{
+      const items=P.filter(p=>p.system===sys).map(agg);
+      const els=[...new Map(items.slice().sort((a,b)=>(a.order??0)-(b.order??0)).map(p=>[p.element,1])).keys()]
+        .filter(e=>(!q||e.toLowerCase().includes(q))&&(brush||(view==="all"&&!hiEng)||items.some(p=>p.element===e&&p.units.some(u=>+u.dwgs&&matchU(u)))));
       if(!els.length&&(hiEng||view!=="all"||q))return"";
-      const sd=n(items.filter(p=>p.status==="ok")), td=n(items);
+      const su=items.flatMap(p=>p.units);
       const rows=els.map(el=>`<tr><td class="el">${esc(el)}</td>${["C","R"].map(t=>{
-        const p=items.find(x=>x.element===el&&x.type===t);
-        if(!p||!+p.dwgs)return`<td><div class="na">—</div></td>`;
-        const who=p.eng?`<span class="who">${av(p.eng,1)}${esc(SHORT[p.eng]||p.eng)}</span>`:`<span class="who none">+ Assign</span>`;
-        return`<td><button type="button" class="cell st-${esc(p.status)}${late(p)?" late":""}${brush||match(p)?"":" dim"}" data-id="${esc(p.id)}" title="${esc(p.notes||ST[p.status])}">
-          <span class="d">${esc(fmt(p.due))}</span><span class="k">${esc(p.dwgs)} dwg${+p.dwgs===1?"":"s"}</span>${who}${tag(p)}</button></td>`}).join("")}</tr>`).join("");
-      return`<section class="sys"><h3>${esc(sys)}<span>${sd} / ${td} drawings submitted</span></h3><div class="box"><table><colgroup><col class="c1"><col><col></colgroup>
+        const a=items.find(x=>x.element===el&&x.type===t);
+        if(!a||(!+a.dwgs&&!a.split))return`<td>${a?`<button type="button" class="na" data-id="${esc(a.id)}">—</button>`:`<button type="button" class="na" data-add="${esc(sys)}|${esc(el)}|${t}" title="Add ${TYPE[t]} drawings">+</button>`}</td>`;
+        const who=a.split?(a.eng.length?`<span class="who"><span class="stack">${a.eng.map(e=>av(e,1)).join("")}</span>${a.units.length} parts</span>`:`<span class="who none">${a.units.length} parts · unassigned</span>`)
+          :a.eng?`<span class="who">${av(a.eng,1)}${esc(SHORT[a.eng]||a.eng)}</span>`:`<span class="who none">+ Assign</span>`;
+        const hit=a.units.some(u=>matchU(u));
+        return`<td><button type="button" class="cell st-${esc(a.status)}${a.units.some(late)?" late":""}${brush||hit?"":" dim"}${a.split?" split":""}" data-id="${esc(a.id)}" title="${esc(a.notes||ST[a.status])}">
+          <span class="d">${esc(fmt(a.due))}</span><span class="k">${a.split?`<span class="splitk">⑂</span>`:""}${esc(a.dwgs)} dwg${+a.dwgs===1?"":"s"}</span>${who}${tag(a)}</button></td>`}).join("")}</tr>`).join("");
+      return`<section class="sys"><h3><span class="sn">${esc(sys)}</span><span>${sum(su.filter(p=>p.status==="ok"))} / ${sum(su)} drawings submitted</span><button type="button" class="hbtn" data-addel="${esc(sys)}">+ Add element</button></h3><div class="box"><table><colgroup><col class="c1"><col><col></colgroup>
         <thead><tr><th>Element</th><th>Concrete</th><th>Reinforcement</th></tr></thead><tbody>${rows}</tbody></table></div></section>`}).join("");
-    if(!$("matrix").innerHTML.trim())$("matrix").innerHTML=`<div class="empty">${hiEng&&!pk.some(p=>p.eng===hiEng)?`No drawings assigned to ${esc(hiEng)} yet. Use “+ Assign more drawings” above.`:"No drawings match this filter."}</div>`;
+    if(!$("matrix").innerHTML.trim())$("matrix").innerHTML=`<div class="empty">${hiEng&&!U.some(p=>p.eng===hiEng)?`No drawings assigned to ${esc(hiEng)} yet. Use “+ Assign more drawings” above.`:"No drawings match this filter."}</div>`;
   }
 
-  const ups=pk.filter(p=>p.status!=="ok"&&days(p)!==null&&days(p)<=14&&(!hiEng||p.eng===hiEng)).sort((a,b)=>days(a)-days(b));
-  $("up").innerHTML=ups.length?ups.map(p=>`<a tabindex="0" data-id="${esc(p.id)}"><span class="d" style="color:${late(p)?"var(--ns)":"inherit"}">${esc(fmt(p.due))}</span><span class="tg">${tag(p)}</span>
-    <span class="t">${esc(p.system)} · ${esc(p.element)} · ${TYPE[p.type]} (${esc(p.dwgs)})</span><span class="w">${p.eng?av(p.eng,1)+esc(SHORT[p.eng]||p.eng):"Unassigned"}</span></a>`).join("")
+  const ups=U.filter(p=>p.status!=="ok"&&days(p)!==null&&days(p)<=14&&(!hiEng||p.eng===hiEng)).sort((a,b)=>days(a)-days(b));
+  $("up").innerHTML=ups.length?ups.map(p=>`<a tabindex="0" data-id="${esc(p.parent||p.id)}"><span class="d" style="color:${late(p)?"var(--ns)":"inherit"}">${esc(fmt(p.due))}</span><span class="tg">${tag(p)}</span>
+    <span class="t">${esc(p.system)} · ${esc(label(p))} (${esc(p.dwgs)})</span><span class="w">${p.eng?av(p.eng,1)+esc(SHORT[p.eng]||p.eng):"Unassigned"}</span></a>`).join("")
     :`<div class="hint" style="padding:8px 4px">${loaded?"Nothing due in the next 14 days.":"Loading…"}</div>`;
   renderDash();
 }
+
 function renderDash(){
-  const el=$("dash"); if(!pk.length){el.innerHTML="";return}
-  const DAY=864e5, dated=pk.filter(p=>(pd(p.due)||p.status==="ok")&&+p.dwgs);
+  const el=$("dash"); if(!U.length){el.innerHTML="";return}
+  const DAY=864e5, dated=U.filter(p=>(pd(p.due)||p.status==="ok")&&+p.dwgs);
   const total=dated.reduce((s,p)=>s+(+p.dwgs),0); if(!total){el.innerHTML="";return}
-  const first=Math.min(...pk.filter(p=>pd(p.due)).map(p=>+pd(p.due)),+T0);
+  const first=Math.min(...U.filter(p=>pd(p.due)).map(p=>+pd(p.due)),+T0);
   const planEv=dated.map(p=>[+(pd(p.due)||first),+p.dwgs]).sort((a,b)=>a[0]-b[0]);
-  const actEv=pk.filter(p=>p.status==="ok"&&+p.dwgs).map(p=>[+(pd(p.submittedAt)||pd(p.due)||first),+p.dwgs]).map(([d,v])=>[Math.min(d,+T0),v]).sort((a,b)=>a[0]-b[0]);
+  const actEv=U.filter(p=>p.status==="ok"&&+p.dwgs).map(p=>[+(pd(p.submittedAt)||pd(p.due)||first),+p.dwgs]).map(([d,v])=>[Math.min(d,+T0),v]).sort((a,b)=>a[0]-b[0]);
   const t0=Math.min(planEv[0][0],actEv[0]?.[0]??Infinity,+T0)-3*DAY, t1=Math.max(planEv[planEv.length-1][0],+T0)+3*DAY;
   const cum=(ev,t)=>ev.reduce((s,[d,v])=>s+(d<=t?v:0),0);
   const W=920,H=330,L=48,R=20,T=18,B=34, X=t=>L+(t-t0)/(t1-t0)*(W-L-R), Y=v=>H-B-v/total*(H-T-B);
@@ -368,7 +442,7 @@ function renderDash(){
       <g id="hov" visibility="hidden"><line id="hl" y1="${T}" y2="${H-B}" class="hl"/><rect id="hr" rx="4" height="46" width="150" class="hr"/><text id="ht" class="ht"></text></g>
       <rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent" id="hit"/>
     </svg></div>
-    <div class="legend"><span><i style="background:var(--accent);height:3px;vertical-align:3px"></i>Planned (target dates)</span><span><i style="background:var(--ok-fill);height:3px;vertical-align:3px"></i>Submitted</span>${pk.some(p=>!pd(p.due)&&p.status!=="ok"&&+p.dwgs)?`<span>${pk.filter(p=>!pd(p.due)&&p.status!=="ok").reduce((s,p)=>s+(+p.dwgs||0),0)} drawings without a target date are not on the graph</span>`:""}</div>
+    <div class="legend"><span><i style="background:var(--accent);height:3px;vertical-align:3px"></i>Planned (target dates)</span><span><i style="background:var(--ok-fill);height:3px;vertical-align:3px"></i>Submitted</span>${U.some(p=>!pd(p.due)&&p.status!=="ok"&&+p.dwgs)?`<span>${U.filter(p=>!pd(p.due)&&p.status!=="ok").reduce((s,p)=>s+(+p.dwgs||0),0)} drawings without a target date are not on the graph</span>`:""}</div>
   </div>`;
   const svg=$("sc"),hov=$("hov");
   $("hit").onmousemove=e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,t=t0+(x-L)/(W-L-R)*(t1-t0);
@@ -377,9 +451,11 @@ function renderDash(){
     $("ht").innerHTML=`<tspan x="${bx+10}" y="${T+20}" class="hd">${new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</tspan><tspan x="${bx+10}" y="${T+38}">Plan ${pv}${av!==null?" · Done "+av:""}</tspan>`};
   $("hit").onmouseleave=()=>hov.setAttribute("visibility","hidden");
 }
+
+
 /* ===== storage: Claude page DB → Supabase → this computer ===== */
 const LS="kaec-pkgs-v1";
-function setAll(list){pk=list;loaded=true;render()}
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(pk))}catch(e){}}
 async function startClaude(){
   if(!window.claude||!window.claude.use)return false;
   const db=await window.claude.use("db").catch(()=>null); if(!db)return false;
@@ -387,59 +463,153 @@ async function startClaude(){
   const timer=setTimeout(()=>setSync("Can't reach the shared schedule yet. Still trying…"),10000);
   col.onSnapshot(s=>{pk=s.docs.map(d=>({...d.data(),id:d.id}));if(!s.metadata.fromCache){clearTimeout(timer);loaded=true;setSync("Shared with the team · live",true)}render()},
     ()=>{clearTimeout(timer);loaded=true;setSync("Couldn't load the schedule. Reopen the page to try again.");render()});
-  store={patch:(id,d)=>col.doc(id).update(d)}; return true;
+  store={patch:(id,d)=>col.doc(id).update(d),create:(id,d)=>col.doc(id).set(d),del:id=>col.doc(id).delete()}; return true;
 }
 async function startSupabase(){
   if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!window.supabase)return false;
   const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-  const fromRow=r=>({id:r.id,system:r.system,sysOrder:r.sys_order,element:r.element,order:r.ord,type:r.type,dwgs:r.dwgs,due:r.due||"",status:r.status,eng:r.eng||"",notes:r.notes||"",submittedAt:r.submitted_at||""});
-  const toRow=d=>{const r={};for(const[k,v]of Object.entries(d)){if(k==="updated")r.updated_at=v;else if(k==="due")r.due=v||null;else if(k==="submittedAt")r.submitted_at=v||null;else r[k]=v}return r};
+  const fromRow=r=>({id:r.id,system:r.system,sysOrder:r.sys_order,element:r.element,order:r.ord,type:r.type,dwgs:r.dwgs,due:r.due||"",status:r.status,eng:r.eng||"",notes:r.notes||"",submittedAt:r.submitted_at||"",parent:r.parent||"",part:r.part||""});
+  const MAP={sysOrder:"sys_order",order:"ord",submittedAt:"submitted_at",updated:"updated_at"};
+  const toRow=d=>{const r={};for(const[k,v]of Object.entries(d)){if(k==="id")continue;const c=MAP[k]||k;r[c]=(c==="due"||c==="submitted_at")?(v||null):v}return r};
   async function pull(){const{data,error}=await sb.from(SUPABASE_TABLE).select("*");if(error){setSync("Couldn't load from Supabase: "+error.message);loaded=true;render();return}
-    setAll(data.map(fromRow));setSync("Shared with the team · live",true)}
+    pk=data.map(fromRow);loaded=true;render();setSync("Shared with the team · live",true)}
   await pull();
-  sb.channel("kaec").on("postgres_changes",{event:"*",schema:"public",table:SUPABASE_TABLE},()=>pull()).subscribe();
-  store={patch:async(id,d)=>{const p=pk.find(x=>x.id===id);Object.assign(p,d);render();const{error}=await sb.from(SUPABASE_TABLE).update(toRow(d)).eq("id",id);if(error){await pull();throw error}}};
+  let t;sb.channel("kaec").on("postgres_changes",{event:"*",schema:"public",table:SUPABASE_TABLE},()=>{clearTimeout(t);t=setTimeout(pull,300)}).subscribe();
+  const chk=async(res)=>{const{error}=await res;if(error){await pull();throw error}};
+  store={
+    patch:async(id,d)=>{Object.assign(pk.find(x=>x.id===id)||{},d);render();await chk(sb.from(SUPABASE_TABLE).update(toRow(d)).eq("id",id))},
+    create:async(id,d)=>{pk.push({...d,id});render();await chk(sb.from(SUPABASE_TABLE).insert({id,...toRow(d)}))},
+    del:async id=>{pk=pk.filter(x=>x.id!==id);render();await chk(sb.from(SUPABASE_TABLE).delete().eq("id",id))}};
   return true;
 }
 function startLocal(){
   let list=null;try{list=JSON.parse(localStorage.getItem(LS)||"null")}catch(e){}
-  setAll(Array.isArray(list)&&list.length?list:SEED.map(x=>({...x})));
+  pk=Array.isArray(list)&&list.length?list:SEED.map(x=>({...x}));loaded=true;render();
   setSync("Saved on this computer only");
-  store={patch:async(id,d)=>{Object.assign(pk.find(x=>x.id===id),d);try{localStorage.setItem(LS,JSON.stringify(pk))}catch(e){}render()}};
+  store={patch:async(id,d)=>{Object.assign(pk.find(x=>x.id===id),d);saveLocal();render()},
+    create:async(id,d)=>{pk.push({...d,id});saveLocal();render()},
+    del:async id=>{pk=pk.filter(x=>x.id!==id);saveLocal();render()}};
 }
-async function patch(id,data){const p=pk.find(x=>x.id===id);if(!p)return;data.updated=new Date().toISOString();
-  if(data.status&&data.status!==p.status){const d=new Date();data.submittedAt=data.status==="ok"?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`:""}
-  await store.patch(id,data)}
+function withStatusDate(old,d){if(d.status&&d.status!==old?.status)d.submittedAt=d.status==="ok"?iso(new Date()):"";return d}
+async function patch(id,data){const p=pk.find(x=>x.id===id);if(!p)return;data.updated=new Date().toISOString();withStatusDate(p,data);await store.patch(id,data)}
 function fail(e){toast(e&&e.code==="permission_denied"?"You have view-only access.":"Couldn't save. Check your connection and try again.")}
 
-/* ===== edit dialog ===== */
+/* ===== package dialog (single or split into parts) ===== */
+const engOpts=v=>`<option value="">Unassigned</option>`+ENG.map(([e,s])=>`<option value="${esc(e)}"${v===e?" selected":""}>${esc(s)}</option>`).join("");
+const stOpts=v=>Object.entries(ST).map(([k,s])=>`<option value="${k}"${v===k?" selected":""}>${s}</option>`).join("");
 function openEdit(id){
   const p=pk.find(x=>x.id===id); if(!p)return;
-  editId=id; draft={eng:p.eng||"",status:p.status};
+  editId=id; delArmed=false; $("delPkg").textContent="Delete";
+  const ps=partsOf(id);
+  draft={eng:p.eng||"",status:p.status,parts:ps.map(x=>({id:x.id,part:x.part||"",dwgs:x.dwgs,eng:x.eng||"",status:x.status,due:x.due?String(x.due).slice(0,10):"",notes:x.notes||""})),removed:[]};
   $("fTitle").textContent=`${p.element} · ${TYPE[p.type]}`;
-  $("fSub").textContent=`${p.system} · ${p.dwgs} drawing${+p.dwgs===1?"":"s"}`;
   $("iDue").value=p.due?String(p.due).slice(0,10):""; $("iN").value=p.dwgs??""; $("iNotes").value=p.notes||"";
-  paintPick(); $("dlg").showModal();
+  paint(); $("dlg").showModal();
 }
-function paintPick(){
-  $("pEng").innerHTML=ENG.map(([e,s])=>`<button type="button" data-e="${esc(e)}" class="${draft.eng===e?"on":""}">${av(e,1)}${esc(s)}</button>`).join("")
-    +`<button type="button" data-e="" class="plain ${draft.eng?"":"on"}">Unassigned</button>`;
-  $("pSt").innerHTML=Object.entries(ST).map(([k,v])=>`<button type="button" data-s="${k}" class="plain s-${k}${draft.status===k?" on":""}">${v}</button>`).join("");
+function paint(){
+  const p=pk.find(x=>x.id===editId), split=draft.parts.length>0;
+  $("single").hidden=split; $("splitBox").hidden=!split;
+  const tot=split?draft.parts.reduce((s,x)=>s+(+x.dwgs||0),0):+$("iN").value||0;
+  $("fSub").textContent=`${p.system} · ${tot} drawing${tot===1?"":"s"}${split?` in ${draft.parts.length} parts`:""}`;
+  if(!split){
+    $("pEng").innerHTML=ENG.map(([e,s])=>`<button type="button" data-e="${esc(e)}" class="${draft.eng===e?"on":""}">${av(e,1)}${esc(s)}</button>`).join("")
+      +`<button type="button" data-e="" class="plain ${draft.eng?"":"on"}">Unassigned</button>`;
+    $("pSt").innerHTML=Object.entries(ST).map(([k,v])=>`<button type="button" data-s="${k}" class="plain s-${k}${draft.status===k?" on":""}">${v}</button>`).join("");
+  } else {
+    $("parts").innerHTML=draft.parts.map((x,i)=>`<tr data-i="${i}">
+      <td><input data-f="part" value="${esc(x.part)}" placeholder="Part name" aria-label="Part name"></td>
+      <td><input data-f="dwgs" type="number" min="0" step="1" value="${esc(x.dwgs)}" aria-label="Drawings" class="n"></td>
+      <td><select data-f="eng" aria-label="Engineer">${engOpts(x.eng)}</select></td>
+      <td><select data-f="status" aria-label="Status" class="s-${x.status}">${stOpts(x.status)}</select></td>
+      <td><input data-f="due" type="date" value="${esc(x.due)}" aria-label="Target date"></td>
+      <td><button type="button" class="x" data-rm="${i}" aria-label="Remove part">×</button></td></tr>`).join("");
+  }
 }
-$("pEng").onclick=e=>{const b=e.target.closest("[data-e]");if(!b)return;draft.eng=b.dataset.e;paintPick()};
-$("pSt").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;draft.status=b.dataset.s;paintPick()};
+$("pEng").onclick=e=>{const b=e.target.closest("[data-e]");if(!b)return;draft.eng=b.dataset.e;paint()};
+$("pSt").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;draft.status=b.dataset.s;paint()};
+$("iN").oninput=()=>paint();
+$("splitBtn").onclick=()=>{
+  const n=+$("iN").value||0, a=Math.ceil(n/2), due=$("iDue").value;
+  draft.parts=[{part:"Part 1",dwgs:a,eng:draft.eng,status:draft.status,due,notes:""},{part:"Part 2",dwgs:n-a,eng:"",status:draft.status==="ok"?"ok":"ns",due,notes:""}];
+  paint(); $("parts").querySelector("input").focus();
+};
+$("addPart").onclick=()=>{draft.parts.push({part:`Part ${draft.parts.length+1}`,dwgs:0,eng:"",status:"ns",due:$("iDue").value,notes:""});paint();
+  const r=$("parts").querySelectorAll("tr");r[r.length-1].querySelector("input").focus()};
+$("parts").addEventListener("input",e=>{const f=e.target.dataset.f;if(!f)return;const i=+e.target.closest("tr").dataset.i;draft.parts[i][f]=f==="dwgs"?(e.target.value===""?0:+e.target.value):e.target.value;
+  if(f==="status")e.target.className="s-"+e.target.value;
+  if(f==="dwgs"){const tot=draft.parts.reduce((s,x)=>s+(+x.dwgs||0),0);$("fSub").textContent=`${pk.find(x=>x.id===editId).system} · ${tot} drawings in ${draft.parts.length} parts`}});
+$("parts").addEventListener("change",e=>{if(e.target.dataset.f==="status"||e.target.dataset.f==="eng"){const i=+e.target.closest("tr").dataset.i;draft.parts[i][e.target.dataset.f]=e.target.value}});
+$("parts").addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(!b)return;const [x]=draft.parts.splice(+b.dataset.rm,1);if(x.id)draft.removed.push(x.id);paint()});
 $("cancel").onclick=()=>$("dlg").close();
+$("delPkg").onclick=async()=>{
+  if(!delArmed){delArmed=true;$("delPkg").textContent="Click again to delete";return}
+  try{for(const c of partsOf(editId))await store.del(c.id);await store.del(editId);$("dlg").close();toast("Deleted")}catch(err){fail(err)}
+};
 $("form").onsubmit=async e=>{
   e.preventDefault(); $("save").disabled=true;
-  try{await patch(editId,{eng:draft.eng,status:draft.status,due:$("iDue").value,dwgs:$("iN").value===""?0:Number($("iN").value),notes:$("iNotes").value.trim()});$("dlg").close();toast("Saved")}catch(err){fail(err)}
+  const p=pk.find(x=>x.id===editId), now=new Date().toISOString();
+  try{
+    if(draft.parts.length){
+      for(const id of draft.removed)await store.del(id);
+      let k=0;
+      for(const x of draft.parts){
+        const data={part:x.part.trim()||`Part ${k+1}`,dwgs:+x.dwgs||0,eng:x.eng,status:x.status,due:x.due,notes:x.notes||"",order:k++,updated:now};
+        if(x.id){const old=pk.find(y=>y.id===x.id);withStatusDate(old,data);if(Object.keys(data).some(f=>f!=="updated"&&f!=="submittedAt"&&String(old?.[f]??"")!==String(data[f])))await store.patch(x.id,data)}
+        else{withStatusDate(null,data);await store.create(newId(),{...data,system:p.system,sysOrder:p.sysOrder??0,element:p.element,type:p.type,parent:p.id,submittedAt:data.submittedAt||""})}
+      }
+      const tot=draft.parts.reduce((s,x)=>s+(+x.dwgs||0),0);
+      await patch(editId,{dwgs:tot,notes:$("iNotes").value.trim()});
+    } else {
+      for(const id of draft.removed)await store.del(id);
+      await patch(editId,{eng:draft.eng,status:draft.status,due:$("iDue").value,dwgs:$("iN").value===""?0:Number($("iN").value),notes:$("iNotes").value.trim()});
+    }
+    $("dlg").close();toast("Saved");
+  }catch(err){fail(err)}
   $("save").disabled=false;
 };
 
+/* ===== add element / system ===== */
+function openAdd(sys,el,type){
+  const systems=[...new Map(pk.filter(isPkg).sort((a,b)=>(a.sysOrder??0)-(b.sysOrder??0)).map(p=>[p.system,1])).keys()];
+  $("aSys").innerHTML=systems.map(s=>`<option${s===sys?" selected":""}>${esc(s)}</option>`).join("")+`<option value="__new">+ New system…</option>`;
+  if(!systems.length)$("aSys").value="__new";
+  $("aNewSys").hidden=$("aSys").value!=="__new"; $("aNewSys").value="";
+  $("aEl").value=el||""; $("aEl").readOnly=!!el;
+  $("aCn").value=""; $("aCd").value=""; $("aRn").value=""; $("aRd").value="";
+  $("aCbox").hidden=type==="R"; $("aRbox").hidden=type==="C";
+  $("aTitle").textContent=el?`Add ${TYPE[type]} drawings`:"Add element";
+  $("adlg").showModal(); (el?(type==="C"?$("aCn"):$("aRn")):$("aEl")).focus();
+}
+$("aSys").onchange=()=>{$("aNewSys").hidden=$("aSys").value!=="__new";if(!$("aNewSys").hidden)$("aNewSys").focus()};
+$("aCancel").onclick=()=>$("adlg").close();
+$("aForm").onsubmit=async e=>{
+  e.preventDefault();
+  const isNew=$("aSys").value==="__new", sys=(isNew?$("aNewSys").value:$("aSys").value).trim(), el=$("aEl").value.trim();
+  if(!sys||!el){toast(!sys?"Type a system name.":"Type an element name.");return}
+  const P=pk.filter(isPkg), inSys=P.filter(p=>p.system===sys);
+  const sysOrder=inSys.length?inSys[0].sysOrder??0:Math.max(-1,...P.map(p=>p.sysOrder??0))+1;
+  const same=inSys.find(p=>p.element===el), order=same?same.order:Math.max(-1,...inSys.map(p=>p.order??0))+1;
+  const rows=[];
+  if(!$("aCbox").hidden&&+$("aCn").value)rows.push(["C",+$("aCn").value,$("aCd").value]);
+  if(!$("aRbox").hidden&&+$("aRn").value)rows.push(["R",+$("aRn").value,$("aRd").value]);
+  if(!rows.length){toast("Enter the number of drawings.");return}
+  for(const[t]of rows)if(inSys.some(p=>p.element===el&&p.type===t)){toast(`${el} already has ${TYPE[t]} drawings in ${sys}. Open it and use Split instead.`);return}
+  $("aSave").disabled=true;
+  try{for(const[t,n,d]of rows)await store.create(newId(),{system:sys,sysOrder,element:el,order,type:t,dwgs:n,due:d,status:"ns",eng:"",notes:"",parent:"",part:"",submittedAt:"",updated:new Date().toISOString()});
+    $("adlg").close();toast(`${el} added to ${sys}`)}catch(err){fail(err)}
+  $("aSave").disabled=false;
+};
+$("addElTop").onclick=()=>openAdd("", "", "");
+
 /* ===== interactions ===== */
 $("matrix").addEventListener("click",async e=>{
-  const c=e.target.closest(".cell"); if(!c)return;
+  const add=e.target.closest("[data-add]"); if(add){const[s,el,t]=add.dataset.add.split("|");openAdd(s,el,t);return}
+  const ae=e.target.closest("[data-addel]"); if(ae){openAdd(ae.dataset.addel,"","");return}
+  const c=e.target.closest(".cell,.na[data-id]"); if(!c)return;
   const id=c.dataset.id;
-  if(brush){const p=pk.find(x=>x.id===id),to=p.eng===brush?"":brush;
+  if(brush&&c.classList.contains("cell")){
+    if(partsOf(id).length){openEdit(id);toast("This package is split. Assign each part here.");return}
+    const p=pk.find(x=>x.id===id),to=p.eng===brush?"":brush;
     try{await patch(id,{eng:to});toast(to?`${p.element} ${TYPE[p.type]} → ${SHORT[to]}`:"Unassigned")}catch(err){fail(err)}}
   else openEdit(id);
 });
@@ -455,7 +625,7 @@ $("brushOff").onclick=()=>{brush="";render()};
 document.querySelector(".modes").addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(!b)return;view=b.dataset.view;
   document.querySelectorAll("[data-view]").forEach(x=>x.classList.toggle("on",x===b));render()});
 $("q").oninput=render;
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("dlg").open&&(brush||hiEng)){if(brush)brush="";else hiEng="";render()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("dlg").open&&!$("adlg").open&&(brush||hiEng)){if(brush)brush="";else hiEng="";render()}});
 
 render();
 (async()=>{try{if(await startClaude())return;if(await startSupabase())return}catch(e){} startLocal()})();
